@@ -5,6 +5,7 @@ import { createNoise3D } from 'simplex-noise';
 import { Polyhedron } from '@/Polyhedron';
 import { MergedMesh } from './MergedMesh';
 import { Water } from './Water';
+import { TileHitTester } from './TileHitTester';
 
 export function Globe({ subdivisions }: { subdivisions: number }) {
   const [output, setOutput] = useState<ReactNode | null>(null);
@@ -33,6 +34,8 @@ export function Globe({ subdivisions }: { subdivisions: number }) {
       snow: [] as BufferGeometry[],
     };
 
+    const hitTestGeos: BufferGeometry[] = [];
+
     polyhedron.tiles.forEach((tile) => {
       const sample = [tile.center.x * 3, tile.center.y * 1.5, tile.center.z * 2] as const;
       let height = MathUtils.mapLinear(noise(...sample), -1, 1, 1, 0);
@@ -54,6 +57,7 @@ export function Globe({ subdivisions }: { subdivisions: number }) {
 
       const column = tile.createColumn(height, capMode === 'inColumn');
       const cap = capMode === 'separate' ? tile.createCap(height) : null;
+      hitTestGeos.push(tile.createHitTestGeometry(height));
 
       if (column) {
         columnGeos[terrainType].push(column);
@@ -78,6 +82,12 @@ export function Globe({ subdivisions }: { subdivisions: number }) {
         <MergedMesh geometries={capGeos['forest']} color="rgb(21, 105, 9)" />
         <MergedMesh geometries={capGeos['rockLow']} color="rgb(24, 105, 14)" noShadow />
         <MergedMesh geometries={capGeos['rockHigh']} color="rgb(245, 245, 245)" noShadow />
+
+        <TileHitTester
+          geometries={hitTestGeos}
+          // onTileEnter={(id) => console.log('tile enter', id)}
+          // onTileLeave={(id) => console.log('tile leave', id)}
+        />
 
         <mesh castShadow>
           <sphereGeometry args={[0.99]} />

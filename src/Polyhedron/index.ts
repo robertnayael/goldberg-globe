@@ -1,6 +1,7 @@
-import { BufferAttribute, BufferGeometry, SphereGeometry, Triangle, Vector3 } from 'three';
+import { BufferAttribute, BufferGeometry, Mesh, SphereGeometry, Triangle, Vector3 } from 'three';
 import Hexasphere from '@/../lib/hexasphere.js';
 import { pairwise } from '@/utils';
+import { Intersection } from '@react-three/fiber';
 
 // https://en.wikipedia.org/wiki/Goldberg_polyhedron
 
@@ -28,7 +29,7 @@ export class Polyhedron {
   }
 }
 
-class Tile {
+export class Tile {
   readonly type: 'pentagon' | 'hexagon';
   readonly center: Vector3;
   readonly boundary: Vector3[];
@@ -110,6 +111,45 @@ class Tile {
     this.id = Math.floor(Math.random() * 10_000_000);
   }
 
+  /**
+   * Creates a simplified geometry representing the tile
+   */
+  createHitTestGeometry(height: number): BufferGeometry {
+    height = 1 + height * 0.3;
+
+    const bottom = [...this.boundary];
+    const top = this.offsetBoundary(bottom, height);
+    const sides = Tile.createSides([bottom, top]);
+    const capTop = Tile.closeBoundary(top);
+    const capBottom = Tile.closeBoundary(bottom, 'ccw');
+
+    const vertices = [...capTop, ...sides, ...capBottom].flatMap((v) => v.toArray());
+
+    // Prepare a custom buffer attribute with the tile ID for every vertex.
+    // Afer hit test geometries for multiple tiles are merged, this will allow the hit tester
+    // to retrieve the relevant ID based on the vertices of the face that was hit.
+    const tileIds = [
+      ...capTop.map(() => this.id),
+      ...sides.map(() => this.id),
+      // Tiles cover the whole sphere and there should be no gaps but just to be safe,
+      // we create a bottom cap with ID values of `0`. If a ray happens to hit the bottom of the tile,
+      // the hit tester will know to ignore this:
+      ...capBottom.map(() => 0),
+    ];
+
+    const geo = new BufferGeometry();
+    geo.setAttribute('position', new BufferAttribute(new Float32Array(vertices), 3));
+    geo.setAttribute('tile-id', new BufferAttribute(new Float32Array(tileIds), 3));
+
+    return geo;
+  }
+
+  static getIdFromHitTestGeometry(intersection: Intersection): number | null {
+    const tileIds = (intersection.object as Mesh)?.geometry?.getAttribute('tile-id')?.array ?? [];
+    return tileIds[intersection.face?.a ?? -1] || null;
+  }
+
+  // TODO: Remove
   createSphere(): BufferGeometry {
     const geo = new SphereGeometry(0.003);
     geo.translate(...this.center.toArray());
