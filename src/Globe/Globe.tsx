@@ -9,7 +9,7 @@ function Globe({ subdivisions }: { subdivisions: number }) {
   const g = createGlobe(subdivisions);
 
   return (
-    <Fragment>
+    <Fragment key={g.polyhedron.id}>
       <MergedMesh geometries={g.columnGeos['underwater']} color="rgb(145, 118, 35)" />
       <MergedMesh geometries={g.columnGeos['sand']} color="rgb(245, 218, 66)" />
       <MergedMesh geometries={g.columnGeos['grass']} color="rgb(126, 245, 51)" />

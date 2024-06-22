@@ -22,10 +22,12 @@ export class Polyhedron {
   data: Hexasphere;
 
   readonly tiles: Tile[];
+  readonly id: number;
 
   constructor(subDivisions: number) {
     this.data = new Hexasphere(1, subDivisions, 1);
     this.tiles = this.data.tiles.map((t) => new Tile(t));
+    this.id = Math.floor(Math.random() * 10_000_000);
   }
 }
 

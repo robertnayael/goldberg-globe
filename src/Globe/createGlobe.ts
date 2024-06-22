@@ -62,6 +62,7 @@ export function createGlobe(subdivisions: number) {
   });
 
   return {
+    polyhedron,
     columnGeos,
     capGeos,
     hitTestGeos,
