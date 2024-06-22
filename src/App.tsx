@@ -5,7 +5,7 @@ import { Canvas } from '@react-three/fiber';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { CameraControls, PerformanceMonitor } from '@react-three/drei';
 
-import { Globe } from './Globe/Globe';
+import { Globe } from './Globe';
 
 function App() {
   return (
