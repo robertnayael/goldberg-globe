@@ -87,6 +87,7 @@ export function Globe({ subdivisions }: { subdivisions: number }) {
           geometries={hitTestGeos}
           // onTileEnter={(id) => console.log('tile enter', id)}
           // onTileLeave={(id) => console.log('tile leave', id)}
+          // debug
         />
 
         <mesh castShadow>

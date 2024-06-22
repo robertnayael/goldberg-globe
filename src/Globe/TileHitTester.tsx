@@ -14,7 +14,7 @@ export function TileHitTester({
 }: {
   geometries: BufferGeometry[];
   onTileEnter?: (id: Tile['id']) => void;
-  onTileLeave?: (id: Tile['id'] | null) => void;
+  onTileLeave?: (id: Tile['id']) => void;
   debug?: boolean;
 }) {
   const [mergedGeometry, tileIds] = useMemo(() => {
@@ -34,12 +34,10 @@ export function TileHitTester({
       const prevId = prevIdRef.current;
       const id = Tile.getIdFromHitTestGeometry(e.intersections[0]);
 
-      if (!id) {
-        onTileLeave?.(null);
-      } else if (id === prevId) {
-        return;
-      } else if (id !== prevId) {
+      if (id !== prevId && prevId !== null) {
         onTileLeave?.(prevId);
+      }
+      if (id !== prevId && id !== null) {
         onTileEnter?.(id);
       }
 
@@ -50,7 +48,9 @@ export function TileHitTester({
 
   const onPointerLeave = useCallback(() => {
     const prevId = prevIdRef.current;
-    onTileLeave?.(prevId);
+    if (prevId !== null) {
+      onTileLeave?.(prevId);
+    }
     prevIdRef.current = null;
   }, [mergedGeometry, tileIds]);
 
