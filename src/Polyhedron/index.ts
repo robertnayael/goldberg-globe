@@ -35,6 +35,17 @@ export class Tile {
   readonly boundary: Vector3[];
   readonly id: number;
 
+  private _height: number | null = null;
+  set height(value: number) {
+    this._height = value;
+  }
+  get height(): number {
+    if (this._height === null) {
+      throw new Error('Cannot read height before it is set');
+    }
+    return this._height;
+  }
+
   /**
    * Original tile boundaries may have inconsistent order (hexasphere.js returns them like that
    * if a large number of subdivisions is specified). We want them to wind in the same direction, always.
@@ -114,8 +125,8 @@ export class Tile {
   /**
    * Creates a simplified geometry representing the tile
    */
-  createHitTestGeometry(height: number): BufferGeometry {
-    height = 1 + height * 0.3;
+  createHitTestGeometry(): BufferGeometry {
+    const height = this.height;
 
     const bottom = [...this.boundary];
     const top = this.offsetBoundary(bottom, height);
@@ -198,8 +209,8 @@ export class Tile {
     return vertices;
   }
 
-  createColumn(height: number, withCap = false): BufferGeometry | null {
-    height = 1 + height * 0.3;
+  createColumn(withCap = false): BufferGeometry | null {
+    const height = this.height;
     const sizeRatio = 0.9;
 
     const vertices: number[] = [];
@@ -230,11 +241,9 @@ export class Tile {
     return geo;
   }
 
-  createCap(height: number): BufferGeometry | null {
-    height = 1 + height * 0.3;
-
+  createCap(): BufferGeometry | null {
     const sizeRatio = 0.93;
-    const atHeight = height;
+    const atHeight = this.height;
     const bevelHeight = 0.0005;
     const capHeight = 0.005;
 
