@@ -1,0 +1,2 @@
+- Prevent onTileEnter/onTileLeave events from firing while the camera is moving
+- Dispose all manually created geometries

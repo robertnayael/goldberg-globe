@@ -24,6 +24,10 @@ export class Polyhedron {
   readonly tiles: Tile[];
   readonly id: number;
 
+  getTileById(id: number | null): Tile | null {
+    return this.tiles.find((tile) => tile.id === id) ?? null;
+  }
+
   constructor(subDivisions: number) {
     this.data = new Hexasphere(1, subDivisions, 1);
     this.tiles = this.data.tiles.map((t) => new Tile(t));
@@ -32,6 +36,13 @@ export class Polyhedron {
 }
 
 export class Tile {
+  private static columnSizeRatio = 0.9;
+  private static capSizeRatio = 0.93;
+  private static capHeight = 0.005;
+  private static capTopSizeRatio = 0.85;
+  private static bevelHight = 0.0005;
+  private static bevelRatioHorizontal = 0.05;
+
   readonly type: 'pentagon' | 'hexagon';
   readonly center: Vector3;
   readonly boundary: Vector3[];
@@ -73,7 +84,7 @@ export class Tile {
     });
   }
 
-  private bevelBoundary(boundary: Vector3[], bevelRatio = 0.05): Vector3[] {
+  private bevelBoundary(boundary: Vector3[], bevelRatio = Tile.bevelRatioHorizontal): Vector3[] {
     // return boundary;
     const withBevel: Vector3[] = [];
     const n = boundary.length;
@@ -213,23 +224,23 @@ export class Tile {
 
   createColumn(withCap = false): BufferGeometry | null {
     const height = this.height;
-    const sizeRatio = 0.9;
+    const sizeRatio = Tile.columnSizeRatio;
 
     const vertices: number[] = [];
 
     if (withCap) {
       const bottom = this.resizeBoundary(this.bevelBoundary(this.boundary), sizeRatio);
-      const top = this.offsetBoundary(bottom, height);
-      const bottom_TEMP = this.resizeBoundary(this.bevelBoundary(this.boundary), 0.85);
-      const top_TEMP = this.offsetBoundary(bottom_TEMP, height + 0.001);
-      const cap = Tile.closeBoundary(top_TEMP).flatMap((v) => v.toArray());
+      const top = this.offsetBoundary(bottom, height - Tile.bevelHight);
+      const bottomReduced = this.resizeBoundary(this.bevelBoundary(this.boundary), Tile.capTopSizeRatio);
+      const veryTop = this.offsetBoundary(bottomReduced, height);
+      const cap = Tile.closeBoundary(veryTop).flatMap((v) => v.toArray());
       vertices.push(...cap);
-      const rings = [bottom, top, top_TEMP];
+      const rings = [bottom, top, veryTop];
       const sides = Tile.createSides(rings).flatMap((v) => v.toArray());
       vertices.push(...cap, ...sides);
     } else {
       const bottom = this.resizeBoundary(this.bevelBoundary(this.boundary), sizeRatio);
-      const top = this.offsetBoundary(bottom, height);
+      const top = this.offsetBoundary(bottom, height - Tile.capHeight);
       const rings = [bottom, top];
       const sides = Tile.createSides(rings).flatMap((v) => v.toArray());
       vertices.push(...sides);
@@ -244,13 +255,13 @@ export class Tile {
   }
 
   createCap(): BufferGeometry | null {
-    const sizeRatio = 0.93;
-    const atHeight = this.height;
-    const bevelHeight = 0.0005;
-    const capHeight = 0.005;
+    const sizeRatio = Tile.capSizeRatio;
+    const bevelHeight = Tile.bevelHight;
+    const atHeight = this.height - Tile.capHeight;
+    const capHeight = Tile.capHeight;
 
     const base = this.resizeBoundary(this.bevelBoundary(this.boundary), sizeRatio);
-    const reduced = this.resizeBoundary(this.bevelBoundary(this.boundary), 0.85);
+    const reduced = this.resizeBoundary(this.bevelBoundary(this.boundary), Tile.capTopSizeRatio);
     const rings = [
       this.offsetBoundary(base, atHeight),
       this.offsetBoundary(base, atHeight + capHeight - bevelHeight),
@@ -269,5 +280,40 @@ export class Tile {
     geo.setAttribute('position', new BufferAttribute(new Float32Array(vertices), 3));
     geo.setAttribute('tile-id', new BufferAttribute(new Float32Array(tileIds), 3));
     return geo;
+  }
+
+  private selectionGeometry: { outline: BufferGeometry; fill: BufferGeometry } | null = null;
+
+  createSelectionGeometry(): Tile['selectionGeometry'] {
+    if (this.selectionGeometry) {
+      return this.selectionGeometry;
+    }
+
+    const eps = 0.0001;
+    const atHeight = this.height + eps;
+
+    const b = this.bevelBoundary(this.boundary);
+
+    let outer = b;
+    let outer2 = b;
+    let inner = this.resizeBoundary(b, 0.9);
+
+    outer = this.offsetBoundary(outer, atHeight);
+    outer2 = this.offsetBoundary(outer2, atHeight - Tile.capHeight);
+    inner = this.offsetBoundary(inner, atHeight);
+
+    const outlineVertices = [...Tile.createSides([outer, inner])].flatMap((v) => v.toArray());
+
+    const fillVertices = [...Tile.closeBoundary(inner), ...Tile.createSides([outer2, outer])].flatMap((v) =>
+      v.toArray(),
+    );
+
+    const outline = new BufferGeometry();
+    const fill = new BufferGeometry();
+    outline.setAttribute('position', new BufferAttribute(new Float32Array(outlineVertices), 3));
+    fill.setAttribute('position', new BufferAttribute(new Float32Array(fillVertices), 3));
+
+    this.selectionGeometry = { outline, fill };
+    return this.selectionGeometry;
   }
 }

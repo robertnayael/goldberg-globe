@@ -1,12 +1,14 @@
-import { Fragment, memo } from 'react';
+import { Fragment, memo, useMemo, useState } from 'react';
 
 import { MergedMesh } from './MergedMesh';
 import { Water } from './Water';
 import { TileHitTester } from './TileHitTester';
 import { createGlobe } from './createGlobe';
+import { TileSelection } from './TileSelection';
 
 function Globe({ subdivisions }: { subdivisions: number }) {
-  const g = createGlobe(subdivisions);
+  const g = useMemo(() => createGlobe(subdivisions), [subdivisions]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   return (
     <Fragment key={g.polyhedron.id}>
@@ -24,12 +26,9 @@ function Globe({ subdivisions }: { subdivisions: number }) {
       <MergedMesh geometries={g.capGeos['rockLow']} color="rgb(24, 105, 14)" noShadow />
       <MergedMesh geometries={g.capGeos['rockHigh']} color="rgb(245, 245, 245)" noShadow />
 
-      <TileHitTester
-        geometries={g.hitTestGeos}
-        // onTileEnter={(id) => console.log('tile enter', id)}
-        // onTileLeave={(id) => console.log('tile leave', id)}
-        // debug
-      />
+      <TileHitTester geometries={g.hitTestGeos} onTileEnter={setSelectedId} onTileLeave={() => setSelectedId(null)} />
+
+      <TileSelection tile={g.polyhedron.getTileById(selectedId)} />
 
       <mesh castShadow>
         <sphereGeometry args={[0.99]} />
