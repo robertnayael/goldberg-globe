@@ -7,6 +7,8 @@ import { CameraControls, PerformanceMonitor } from '@react-three/drei';
 
 import { Globe } from './Globe';
 
+// https://github.com/mrdoob/three.js/tree/dev/examples/jsm/shaders
+
 function App() {
   return (
     <Canvas shadows={true} camera={{ position: [0, 0, 14], near: 0.01 }}>
@@ -25,7 +27,7 @@ function Main() {
 
   return (
     <>
-      <ambientLight intensity={Math.PI / 32} />
+      <ambientLight intensity={Math.PI / 64} />
       <spotLight
         position={[10, 10, 10]}
         angle={0.13}
@@ -34,6 +36,16 @@ function Main() {
         intensity={Math.PI * 2}
         castShadow={true}
         color="rgb(255, 255, 255)"
+        ref={refs.spotLight}
+      />
+      <spotLight
+        position={[-10, -10, -10]}
+        angle={0.13}
+        penumbra={1}
+        decay={0}
+        intensity={(Math.PI * 2) / 10}
+        castShadow={false}
+        color="rgb(150, 150, 255)"
         ref={refs.spotLight}
       />
       <CameraControls />
