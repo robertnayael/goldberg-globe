@@ -1,2 +1,4 @@
 - Prevent onTileEnter/onTileLeave events from firing while the camera is moving
+- Lock tile to pointer: when rotating the view, the selected tile should always follow the pointer
 - Dispose all manually created geometries
+- Make underwater objects more blurry; maybe remove roughnessMap; or clamp min roughness at a minimum (1.4 seems to work great)
