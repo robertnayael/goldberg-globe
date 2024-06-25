@@ -27,7 +27,6 @@ function Main() {
 
   return (
     <>
-      <ambientLight intensity={Math.PI / 64} />
       <spotLight
         position={[10, 10, 10]}
         angle={0.13}
@@ -44,7 +43,7 @@ function Main() {
         penumbra={1}
         decay={0}
         intensity={(Math.PI * 2) / 10}
-        castShadow={false}
+        castShadow={true}
         color="rgb(150, 150, 255)"
         ref={refs.spotLight}
       />
